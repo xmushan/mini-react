@@ -1,6 +1,6 @@
-
+import './App.css'
 const App = (
-  <div>123123</div>
+  <div className="red">123123</div>
 )
 
 export default App;

@@ -2,25 +2,22 @@
 function renderDom(element) {
   let dom = null; // 要返回的 dom
 
+  // 条件渲染为假，返回 null
   if (!element && element !== 0) {
-    // 条件渲染为假，返回 null
     return null;
   }
-
+  // 如果 element 本身为 string，返回文本节点
   if (typeof element === 'string') {
-    // 如果 element 本身为 string，返回文本节点
     dom = document.createTextNode(element);
     return dom;
   }
-
+  // 如果 element 本身为 number，将其转为 string 后返回文本节点
   if (typeof element === 'number') {
-    // 如果 element 本身为 number，将其转为 string 后返回文本节点
     dom = document.createTextNode(String(element));
     return dom;
   }
-
+  // 列表渲染
   if (Array.isArray(element)) {
-    // 列表渲染
     dom = document.createDocumentFragment();
     for (let item of element) {
       const child = renderDom(item);
@@ -31,11 +28,10 @@ function renderDom(element) {
 
   const {
     type,
-    props: { children },
+    props: { children,...attributes },
   } = element;
-
+  // 常规 dom 节点的渲染
   if (typeof type === 'string') {
-    // 常规 dom 节点的渲染
     dom = document.createElement(type);
   } else if (typeof type === 'function') {
     // React组件的渲染
@@ -63,10 +59,32 @@ function renderDom(element) {
       dom.appendChild(childrenDom);
     }
   }
-
+  updateAttributes(dom, attributes);
   return dom;
 }
 
+// 更新dom属性
+function updateAttributes(dom,attributes){
+  Object.keys(attributes).forEach(objKey => {
+    // 事件的处理
+    if (objKey.startsWith('on')) {
+      const eventName  = objKey.slice(2).toLowerCase()
+      dom.addEventListener(eventName, attributes[objKey])
+    } else if(objKey === 'className') {
+      const classes = attributes[objKey].split(' ')
+      classes.forEach(className => {
+        dom.classList.add(className)
+      })
+    } else if (objKey === 'style') {
+      const style = attributes[objKey]
+      Object.keys(style).forEach(styleKey => {
+        dom.style[styleKey] = style[styleKey]
+      })
+    }
+  })
+}
+
+// 将element添加到根容器中
 function render(element, container) {
   const dom = renderDom(element);
   container.appendChild(dom);
