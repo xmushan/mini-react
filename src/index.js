@@ -1,6 +1,6 @@
 // import React from 'react';
 // import ReactDOM from 'react-dom/client';
-import ReactDOM from './renderdom'
+import ReactDOM from './source/render'
 import App from './App';
 console.log(App)
 ReactDOM.render(App, document.getElementById('root')); 
