@@ -4,25 +4,13 @@ import renderDom from './renderDom'
 let nextUnitofWork = null
 let rootFiber = null
 
-function createRoot(ele, container) {
-  rootFiber = {
-    // 记录真实的DOM节点
-    stateNode: container,
-    element: {
-      props: { children: [ele] }
-    }
-  }
-  nextUnitofWork = rootFiber
-}
-
 function performUnitOfWork(workInProgress) {
-  console.log(workInProgress,'workInProgress')
   /**
    * 根据 fiber 创建 dom
    */
-  // 首先我们要根据 fiber 去创建 dom，当 fiber 的 stateNode 属性为空时，表示还没有对其创建 dom，所以我们调用 renderDom 函数，根据 fiber 的 element 属性去创建对应的 dom，并将其挂载到父节点下
+  // 根据 fiber 去创建 dom，当 fiber 的 stateNode 属性为空时，表示还没有对其创建 dom，调用 renderDom 函数，根据 fiber 的 element 属性去创建对应的 dom，并将其挂载到父节点下
   if (!workInProgress.stateNode) {
-    workInProgress.stateNode = renderDom(workInProgress.element)
+    workInProgress.stateNode = renderDom(workInProgress.ele)
   }
   // 如果 fiber有父fiber且有 dom，向上寻找能挂载 dom 的节点进行 dom 挂载
   if (workInProgress.return && workInProgress.stateNode) {
@@ -37,20 +25,20 @@ function performUnitOfWork(workInProgress) {
   /**
    * 构建Fiber树
    */
-  let children = workInProgress.element?.props?.children;
-  let type = workInProgress.element?.type;
+  let children = workInProgress.ele?.props?.children;
+  let type = workInProgress.ele?.type;
 
   if (typeof type === 'function') {
     // 当前 fiber 对应React组件，对其return 迭代
     if (type.prototype.isReactComponent) {
       // 类组件，通过生成的类实例的 render 方法返回 jsx
-      const { props, type: Comp } = workInProgress.element;
+      const { props, type: Comp } = workInProgress.ele;
       const component = new Comp(props);
       const jsx = component.render();
       children = [jsx]
     } else {
       // 函数组件，直接调用函数返回 jsx
-      const { props, type: Fn } = workInProgress.element
+      const { props, type: Fn } = workInProgress.ele
       const jsx = Fn(props)
       children = [jsx]
     }
@@ -67,7 +55,7 @@ function performUnitOfWork(workInProgress) {
     let prevSibling = null
 
     // 对子元素迭代
-    while (index > eles.length) {
+    while (index < eles.length) {
       const ele = eles[index]
       const newFiber = {
         ele,
@@ -133,5 +121,15 @@ function workLoop(deadLine){
 
 requestIdleCallback(workLoop);
 
+function createRoot(ele, container) {
+  rootFiber = {
+    // 记录真实的DOM节点
+    stateNode: container,
+    ele: {
+      props: { children: [ele] }
+    }
+  }
+  nextUnitofWork = rootFiber
+}
 
 export default createRoot
