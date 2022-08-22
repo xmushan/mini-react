@@ -1,5 +1,5 @@
 import renderDom from './renderDom'
-
+import commitRoot from './commit'
 // 下一个要处理的任务单元
 let nextUnitofWork = null
 let rootFiber = null
@@ -13,14 +13,14 @@ function performUnitOfWork(workInProgress) {
     workInProgress.stateNode = renderDom(workInProgress.ele)
   }
   // 如果 fiber有父fiber且有 dom，向上寻找能挂载 dom 的节点进行 dom 挂载
-  if (workInProgress.return && workInProgress.stateNode) {
-    let parentFiber = workInProgress.return;
-    while (!parentFiber.stateNode) {
-      parentFiber = parentFiber.return;
-    }
-    console.log(parentFiber.stateNode,'lopo')
-    parentFiber.stateNode.appendChild(workInProgress.stateNode);
-  }
+  // if (workInProgress.return && workInProgress.stateNode) {
+  //   let parentFiber = workInProgress.return;
+  //   while (!parentFiber.stateNode) {
+  //     parentFiber = parentFiber.return;
+  //   }
+  //   console.log(parentFiber.stateNode,'lopo')
+  //   parentFiber.stateNode.appendChild(workInProgress.stateNode);
+  // }
 
   /**
    * 构建Fiber树
@@ -115,6 +115,11 @@ function workLoop(deadLine){
     // 循环执行工作单元
     performUnitOfWork(nextUnitofWork)
     shouldYield = deadLine.timeRemaining() < 1
+  }
+  // 进入commit阶段
+  if (!nextUnitofWork && rootFiber){
+    commitRoot(rootFiber)
+    rootFiber = null
   }
   requestIdleCallback(workLoop);
 }

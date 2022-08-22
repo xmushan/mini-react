@@ -38,6 +38,11 @@ function renderDom(element) {
     return dom;
   }
 
+  // react 组件的渲染
+  if(typeof element === 'function') {
+    dom = document.createDocumentFragment()
+  }
+
 
   const {
     type,
