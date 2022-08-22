@@ -1,11 +1,38 @@
 // 更新dom属性
-function updateAttributes(dom,attributes){
+function updateAttributes(dom, attributes, oldAttributes) {
+
+  // 有旧属性，移除旧属性
+  if (oldAttributes) {
+    Object.keys(oldAttributes).forEach((objKey) => {
+      if (objKey.startsWith('on')) {
+        // 移除旧事件
+        const eventName = objKey.slice(2).toLowerCase()
+        dom.addEventListener(eventName, attributes[objKey])
+      } else if (objKey === 'className') {
+        // className的处理
+        const classes = attributes[objKey].split(' ')
+        classes.forEach(className => {
+          dom.classList.add(className)
+        })
+      } else if (objKey === 'style') {
+        // style的处理
+        const style = attributes[objKey]
+        Object.keys(style).forEach(styleKey => {
+          dom.style[styleKey] = style[styleKey]
+        })
+      } else {
+        // 其他属性的处理
+        dom[objKey] = ''
+      }
+    })
+  }
+
   Object.keys(attributes).forEach(objKey => {
     // 事件的处理
     if (objKey.startsWith('on')) {
-      const eventName  = objKey.slice(2).toLowerCase()
+      const eventName = objKey.slice(2).toLowerCase()
       dom.addEventListener(eventName, attributes[objKey])
-    } else if(objKey === 'className') {
+    } else if (objKey === 'className') {
       const classes = attributes[objKey].split(' ')
       classes.forEach(className => {
         dom.classList.add(className)
@@ -38,19 +65,16 @@ function renderDom(element) {
     return dom;
   }
 
-  // react 组件的渲染
-  if(typeof element === 'function') {
-    dom = document.createDocumentFragment()
-  }
-
-
   const {
     type,
-    props: { children,...attributes },
+    props: { children, ...attributes },
   } = element;
   // 常规 dom 节点的渲染
   if (typeof type === 'string') {
     dom = document.createElement(type);
+  } else if (typeof type === 'function') {
+    // React 组件的渲染
+    dom = document.createDocumentFragment();
   } else {
     // 其他情况暂不考虑
     return null
@@ -60,4 +84,7 @@ function renderDom(element) {
   return dom;
 }
 
-export default renderDom
+export {
+  updateAttributes,
+  renderDom
+}

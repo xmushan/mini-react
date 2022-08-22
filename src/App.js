@@ -1,4 +1,7 @@
+
 import './App.css'
+
+
 
 
 function Test() {
@@ -10,6 +13,7 @@ function Test() {
 const App = (
   <div>
     <div className="red">123123</div>
+    <Test/>
   </div>
 )
 

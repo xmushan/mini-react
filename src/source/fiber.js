@@ -1,8 +1,20 @@
-import renderDom from './renderDom'
+import {renderDom} from './renderDom'
 import commitRoot from './commit'
+import { reconcileChildren } from './reconcileChildren'
 // 下一个要处理的任务单元
 let nextUnitofWork = null
-let rootFiber = null
+let workInProgressRoot = null // 正在工作的根fiber
+let currentRoot = null // 上一次的fiber树
+
+let deletions = []
+
+function deleteFiber(fiber){
+  deletions.push(fiber)
+}
+
+function getDeletions(){
+  return deletions
+}
 
 function performUnitOfWork(workInProgress) {
   /**
@@ -12,15 +24,6 @@ function performUnitOfWork(workInProgress) {
   if (!workInProgress.stateNode) {
     workInProgress.stateNode = renderDom(workInProgress.ele)
   }
-  // 如果 fiber有父fiber且有 dom，向上寻找能挂载 dom 的节点进行 dom 挂载
-  // if (workInProgress.return && workInProgress.stateNode) {
-  //   let parentFiber = workInProgress.return;
-  //   while (!parentFiber.stateNode) {
-  //     parentFiber = parentFiber.return;
-  //   }
-  //   console.log(parentFiber.stateNode,'lopo')
-  //   parentFiber.stateNode.appendChild(workInProgress.stateNode);
-  // }
 
   /**
    * 构建Fiber树
@@ -49,29 +52,7 @@ function performUnitOfWork(workInProgress) {
     let eles = Array.isArray(children) ? children : [children]
     // 打平列表渲染时二维数组的情况
     eles = eles.flat();
-    // 当前遍历的子元素在父节点下的下标
-    let index = 0
-    // 记录上一个兄弟节点
-    let prevSibling = null
-
-    // 对子元素迭代
-    while (index < eles.length) {
-      const ele = eles[index]
-      const newFiber = {
-        ele,
-        return: workInProgress,
-        stateNode: null
-      }
-      // 如果下标为 0，则将当前 fiber 设置为父 fiber 的 child
-      if (index === 0) {
-        workInProgress.child = newFiber
-      } else {
-        // 否则通过 sibling 作为兄弟 fiber 连接
-        prevSibling.sibling = newFiber
-      }
-      prevSibling = newFiber
-      index++
-    }
+    reconcileChildren(workInProgress,eles)
   }
 
   /**
@@ -117,9 +98,13 @@ function workLoop(deadLine){
     shouldYield = deadLine.timeRemaining() < 1
   }
   // 进入commit阶段
-  if (!nextUnitofWork && rootFiber){
-    commitRoot(rootFiber)
-    rootFiber = null
+  if (!nextUnitofWork && workInProgressRoot){
+    commitRoot(workInProgressRoot)
+    // commit 阶段结束，重置变量
+    currentRoot = workInProgressRoot
+    workInProgressRoot = null
+    // 本次 commitRoot 执行完毕后,清空deletions
+    deletions = []
   }
   requestIdleCallback(workLoop);
 }
@@ -127,14 +112,19 @@ function workLoop(deadLine){
 requestIdleCallback(workLoop);
 
 function createRoot(ele, container) {
-  rootFiber = {
+  workInProgressRoot = {
     // 记录真实的DOM节点
     stateNode: container,
     ele: {
       props: { children: [ele] }
-    }
+    },
+    alternate: currentRoot
   }
-  nextUnitofWork = rootFiber
+  nextUnitofWork = workInProgressRoot
 }
 
-export default createRoot
+export {
+  createRoot,
+  deleteFiber,
+  getDeletions
+}
