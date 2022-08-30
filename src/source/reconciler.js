@@ -1,5 +1,8 @@
 import { deleteFiber } from './fiber';
 
+/**
+ * 在fiber树的构建过程中，对fuber打上不同的flag副作用标签
+ */
 export function reconcileChildren(workInProgress, elements) {
   let index = 0; // 当前遍历的子元素在父节点下的下标
   let prevSibling = null; // 记录上一个兄弟节点

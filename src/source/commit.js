@@ -1,7 +1,9 @@
 import { updateAttributes } from './react-dom';
 import { getDeletions } from './fiber';
 
-// 从根节点开始 commit
+/**
+ * commitRoot 执行 dom 的挂载操作，这个阶段是同步执行的，不可被打断
+ */
 export function commitRoot(rootFiber) {
   const deletions = getDeletions();
   deletions.forEach(commitWork);

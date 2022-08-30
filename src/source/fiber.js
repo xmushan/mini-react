@@ -22,7 +22,7 @@ export function commitRender() {
   workInProgressRoot = {
     stateNode: currentRoot.stateNode, // 记录对应的真实 dom 节点
     element: currentRoot.element,
-    alternate: currentRoot,
+    alternate: currentRoot, // 指向对应的current fiber
   };
   nextUnitOfWork = workInProgressRoot;
 }
@@ -40,7 +40,12 @@ export function createRoot(element, container) {
   nextUnitOfWork = workInProgressRoot;
 }
 
-// 执行当前工作单元并设置下一个要执行的工作单元
+/**
+ * fiber 树的遍历采用深度优先遍历，如果当前 fiber 有 child，则设置 child 作为下一个工作单元,
+ * 若无 child 但是有 sibling，则设置 sibling 作为下一个工作单元；如果都没有则深度优先遍历通过 return 返回父 fiber.
+ * 
+ * performUnitOfWork 只处理 fiber 创建对应 dom 但是并不挂载
+ */
 function performUnitOfWork(workInProgress) {
   if (!workInProgress.stateNode) {
     // 若当前 fiber 没有 stateNode，则根据 fiber 挂载的 element 的属性创建
@@ -59,6 +64,7 @@ function performUnitOfWork(workInProgress) {
   let children = workInProgress.element?.props?.children;
 
   let type = workInProgress.element?.type;
+  // 当 React.element 的 type 属性是 function 时，表示 react 组件，我们将其渲染后所得到的 jsx 作为 children 处理
   if (typeof type === 'function') {
     // 当前 fiber 对应 React 组件时，对其 return 迭代
     if (type.prototype.isReactComponent) {
@@ -123,7 +129,9 @@ function updateClassComponent(fiber) {
   reconcileChildren(fiber, [jsx]);
 }
 
-// 处理循环和中断逻辑
+/**
+ * 浏览器每帧的空闲时间段迭代处理 nextUnitOfWork，若一帧处理不完，则中断当前迭代，留到下一帧继续处理
+ */
 function workLoop(deadline) {
   let shouldYield = false;
   while (nextUnitOfWork && !shouldYield) {
@@ -131,6 +139,7 @@ function workLoop(deadline) {
     performUnitOfWork(nextUnitOfWork);
     shouldYield = deadline.timeRemaining() < 1;
   }
+  // 当 nextUnitOfWork 为 null 且 workInProgressRoot 存在时,表示render结束，进入commit阶段
   if (!nextUnitOfWork && workInProgressRoot) {
     // 表示进入 commit 阶段
     commitRoot(workInProgressRoot);
