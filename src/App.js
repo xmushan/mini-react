@@ -1,6 +1,6 @@
 
 import './App.css'
-import { Component } from './source/react'
+import { Component,useState } from './source/react'
 
 console.log(new Component,'Component')
 class ClassComponent extends Component {
@@ -31,10 +31,17 @@ class ClassComponent extends Component {
 }
 
 function FunctionComponent(props) {
+  const [count,setCount] = useState(1)
+  const addCount = () => {
+    console.log('90990')
+    setCount(count + 1);
+  };
   return (
     <div className="function-component">
       <div>this is a function Component</div>
       <div>prop value is: {props.value}</div>
+      <div>{count}</div>
+      <button onClick={addCount}>click</button>
     </div>
   );
 }
@@ -43,7 +50,8 @@ console.log( new ClassComponent )
 const App = (
   <div>
     {/* <div className="red">123123</div> */}
-    <ClassComponent/>
+    {/* <ClassComponent/> */}
+    <FunctionComponent/>
   </div>
 )
 

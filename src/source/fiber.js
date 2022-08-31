@@ -3,9 +3,21 @@ import { commitRoot } from './commit';
 import { reconcileChildren } from './reconciler';
 
 let nextUnitOfWork = null;
+let currentFunctionFiber = null // 当前正在执行的函数组件对应的fiber
+let hookIndex = 0 // 当前函数组件的hook下标
 let workInProgressRoot = null; // 当前工作的 fiber 树
 let currentRoot = null; // 上一次渲染的 fiber 树
 let deletions = []; // 要执行删除 dom 的 fiber
+
+// 获取当前函数组件对应的fiber
+export function getCurrentFunctionFiber () {
+  return currentFunctionFiber
+}
+
+// 获取当前hook下标
+export function getHookIndex () {
+  return hookIndex
+}
 
 // 将某个 fiber 加入 deletions 数组
 export function deleteFiber(fiber) {
@@ -17,7 +29,7 @@ export function getDeletions() {
   return deletions;
 }
 
-// 触发渲染
+// 将当前的currentRoot作为workInProgressRooot，并将nextUnitOfWork指向它，触发渲染
 export function commitRender() {
   workInProgressRoot = {
     stateNode: currentRoot.stateNode, // 记录对应的真实 dom 节点
@@ -71,10 +83,7 @@ function performUnitOfWork(workInProgress) {
       // 类组件
       updateClassComponent(workInProgress);
     } else {
-      // 函数组件
-      const { props, type: Fn } = workInProgress.element;
-      const jsx = Fn(props);
-      children = [jsx];
+      updateFunctionComponent(workInProgress)
     }
   }
 
@@ -126,6 +135,17 @@ function updateClassComponent(fiber) {
     jsx = component.render();
   }
 
+  reconcileChildren(fiber, [jsx]);
+}
+
+// 函数组件的更新
+// 将currentFubctionFiber指向workInprogress。并将hooks数组置空，调用函数组件构造函数，返回对应的jsx结构
+function updateFunctionComponent(fiber) {
+  currentFunctionFiber = fiber;
+  currentFunctionFiber.hooks = [];
+  hookIndex = 0;
+  const { props, type: Fn } = fiber.element;
+  const jsx = Fn(props);
   reconcileChildren(fiber, [jsx]);
 }
 
